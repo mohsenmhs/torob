@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchSearchRetrieve } from "@repo/api";
 import Link from "next/link";
@@ -9,26 +9,42 @@ import type { ProductOutput } from "@repo/api";
 export function SearchContentClient() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query with 0.5 second delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Check if we should show the hint
+  const showHint = searchQuery.trim().length > 0 && searchQuery.trim().length < 3;
 
   // Fetch featured products (empty query or popular items)
   const { data: featuredData, isLoading: isLoadingFeatured } = useSearchSearchRetrieve(
-    {},
+    {
+      page_size: 12,
+    },
     {
       query: {
-        enabled: !searchQuery.trim(), // Only fetch when there's no search query
+        enabled: !debouncedSearchQuery.trim(), // Only fetch when there's no search query
         refetchOnWindowFocus: false,
       } as any,
     }
   );
 
-  // Fetch search results when user types
+  // Fetch search results when user types (with debounce)
   const { data: searchData, isLoading: isLoadingSearch } = useSearchSearchRetrieve(
     {
-      q: searchQuery.trim(),
+      q: debouncedSearchQuery.trim(),
+      page_size: 12,
     },
     {
       query: {
-        enabled: searchQuery.trim().length > 2, // Only fetch when there's a search query with at least 3 characters
+        enabled: debouncedSearchQuery.trim().length >= 3, // Only fetch when there's a search query with at least 3 characters
         refetchOnWindowFocus: false,
       } as any,
     }
@@ -36,13 +52,13 @@ export function SearchContentClient() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
+    if (searchQuery.trim().length >= 3) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
-  const displayData = searchQuery.trim() ? searchData : featuredData;
-  const isLoading = searchQuery.trim() ? isLoadingSearch : isLoadingFeatured;
+  const displayData = debouncedSearchQuery.trim().length >= 3 ? searchData : featuredData;
+  const isLoading = debouncedSearchQuery.trim().length >= 3 ? isLoadingSearch : isLoadingFeatured;
 
   return (
     <div style={{ padding: "2rem", minHeight: "100vh", backgroundColor: "#f9fafb" }}>
@@ -55,36 +71,45 @@ export function SearchContentClient() {
             Find the best prices and compare products
           </p>
           <form onSubmit={handleSearch} style={{ marginBottom: "2rem" }}>
-            <div style={{ display: "flex", gap: "0.5rem", maxWidth: "600px", margin: "0 auto" }}>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for products..."
-                style={{
-                  flex: 1,
-                  padding: "1rem 1.5rem",
-                  fontSize: "1rem",
-                  border: "2px solid #e5e7eb",
-                  borderRadius: "0.5rem",
-                  outline: "none",
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  padding: "1rem 2rem",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  backgroundColor: "#2563eb",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "0.5rem",
-                  cursor: "pointer",
-                }}
-              >
-                Search
-              </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: "600px", margin: "0 auto" }}>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search for products..."
+                  style={{
+                    flex: 1,
+                    padding: "1rem 1.5rem",
+                    fontSize: "1rem",
+                    border: "2px solid #e5e7eb",
+                    borderRadius: "0.5rem",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={searchQuery.trim().length < 3}
+                  style={{
+                    padding: "1rem 2rem",
+                    fontSize: "1rem",
+                    fontWeight: "600",
+                    backgroundColor: searchQuery.trim().length >= 3 ? "#2563eb" : "#9ca3af",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "0.5rem",
+                    cursor: searchQuery.trim().length >= 3 ? "pointer" : "not-allowed",
+                    opacity: searchQuery.trim().length >= 3 ? 1 : 0.6,
+                  }}
+                >
+                  Search
+                </button>
+              </div>
+              {showHint && (
+                <p style={{ fontSize: "0.875rem", color: "#6b7280", textAlign: "center", margin: 0 }}>
+                  Please enter at least 3 characters to search
+                </p>
+              )}
             </div>
           </form>
         </div>
@@ -99,7 +124,7 @@ export function SearchContentClient() {
         {!isLoading && displayData && (
           <div>
             <h2 style={{ fontSize: "1.5rem", fontWeight: "600", color: "#111827", marginBottom: "1.5rem" }}>
-              {searchQuery.trim() ? `Search Results (${displayData.count} found)` : "Featured Products"}
+              {debouncedSearchQuery.trim().length >= 3 ? `Search Results (${displayData.count} found)` : "Featured Products"}
             </h2>
             {displayData.results && displayData.results.length > 0 ? (
               <div
@@ -115,7 +140,7 @@ export function SearchContentClient() {
               </div>
             ) : (
               <div style={{ textAlign: "center", padding: "3rem", color: "#6b7280" }}>
-                {searchQuery.trim() ? "No products found. Try a different search term." : "No products available."}
+                {debouncedSearchQuery.trim().length >= 3 ? "No products found. Try a different search term." : "No products available."}
               </div>
             )}
           </div>
