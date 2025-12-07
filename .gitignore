@@ -52,3 +52,6 @@ pnpm-debug.log*
 *.swo
 *~
 
+# Generated API files
+packages/api/openapi.json
+

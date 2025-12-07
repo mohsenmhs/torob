@@ -1,0 +1,23 @@
+{
+  "name": "@repo/api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "generate": "orval",
+    "update-schema": "curl -H \"CF-Access-Client-Id: ${TC_MAIN_SERVER__CF_ID}\" -H \"CF-Access-Client-Secret: ${TC_MAIN_SERVER__CF_TOKEN}\" \"https://torob.kolahghermezi.link/api/schema/?format=json\" -o openapi.json",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.90.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
+
