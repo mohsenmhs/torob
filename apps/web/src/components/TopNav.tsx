@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSearchBox } from "@repo/ui/search";
 import type { Suggestion } from "@repo/api";
@@ -10,11 +11,11 @@ export function TopNav() {
     const pathname = usePathname();
     const router = useRouter();
     const isHome = pathname === "/";
+    const formRef = useRef<HTMLFormElement | null>(null);
 
     const {
         value,
         setValue,
-        showHint,
         suggestions,
         isLoadingSuggestions,
         showSuggestions,
@@ -26,6 +27,18 @@ export function TopNav() {
         onSelectSuggestion: (query: string) => router.push(`/search?q=${encodeURIComponent(query)}`),
     });
 
+    // Close suggestions on outside click
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            const target = event.target as Node;
+            if (showSuggestions && formRef.current && !formRef.current.contains(target)) {
+                setValue("");
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showSuggestions, setValue]);
+
     return (
         <div className="border-b border-slate-200 bg-slate-100 px-6 py-2">
 
@@ -34,7 +47,13 @@ export function TopNav() {
                     <div className="flex-1 flex items-center gap-4">
                         <a href="/" className="text-2xl font-bold text-rose-500">Bozoro</a>
                         <form
-                            onSubmit={(e) => handleSubmit(e)}
+                            ref={formRef}
+                            onSubmit={(e) => {
+                                handleSubmit(e);
+                                setTimeout(() => {
+                                    // rely on hook state to hide suggestions after navigation
+                                }, 0);
+                            }}
                             className="relative flex-1 max-w-xl"
                         >
                             <input
@@ -56,17 +75,12 @@ export function TopNav() {
                                     }
                                 }}
                             />
-                            {showHint && (
-                                <p className="mt-1 text-[12px] text-slate-500">
-                                    Please enter at least {minCharsSearch} characters to search
-                                </p>
-                            )}
                             {showSuggestions && (
                                 <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
                                     {isLoadingSuggestions ? (
                                         <div className="px-4 py-3 text-sm text-slate-500">Loading suggestions...</div>
                                     ) : (
-                                        suggestions.map((suggestion: Suggestion) => (
+                                     suggestions.map((suggestion: Suggestion) => (
                                             <button
                                                 key={suggestion.id}
                                                 type="button"
