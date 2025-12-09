@@ -4,18 +4,22 @@
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./search": "./src/search/index.ts",
+    "./search/*": "./src/search/*"
+  },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/api": "workspace:*",
     "@tamagui/animations-react-native": "^1.9.0",
     "@tamagui/config": "^1.9.0",
     "@tamagui/core": "^1.9.0",
     "@tamagui/lucide-icons": "^1.9.0",
     "@tamagui/shorthands": "^1.9.0",
-    "react": "^18.2.0",
-    "react-native": "^0.76.0",
     "tamagui": "^1.9.0"
   },
   "devDependencies": {
@@ -24,7 +28,7 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-native": "^0.76.0"
+    "react": ">=18.2.0",
+    "react-native": ">=0.76.0"
   }
 }

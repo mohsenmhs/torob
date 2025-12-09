@@ -3,4 +3,5 @@
 // Mobile version uses Tamagui components
 export { ProductCard } from "./components/ProductCard";
 export * from "./tamagui.config";
+export * from "./search";
 
