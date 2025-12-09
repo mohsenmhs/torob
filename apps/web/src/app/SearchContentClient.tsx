@@ -9,7 +9,6 @@ export function SearchContentClient() {
   const {
     value,
     setValue,
-    showHint,
     suggestions,
     isLoadingSuggestions,
     showSuggestions,
@@ -23,7 +22,7 @@ export function SearchContentClient() {
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 bg-slate-100">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-6xl -mt-40">
         <div className="mx-auto max-w-3xl pt-8 pb-8 text-center">
           <h1 className="mb-5 text-5xl font-bold text-rose-500">
             Bozoro

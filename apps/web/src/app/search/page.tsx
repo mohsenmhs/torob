@@ -83,25 +83,6 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-6xl px-6 py-8">
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="mb-8">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search for products..."
-              className="flex-1 rounded-md border-2 border-slate-200 px-4 py-3 text-base outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-            />
-            <button
-              type="submit"
-              className="rounded-md bg-blue-600 px-6 py-3 text-base font-semibold text-white hover:bg-blue-700"
-            >
-              Search
-            </button>
-          </div>
-        </form>
-
         {query && (
           <div className="flex gap-8">
             {/* Filters Sidebar */}
