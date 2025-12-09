@@ -45,7 +45,14 @@ export function TopNav() {
             {!isHome && (
                 <div className="mx-auto py-2 flex max-w-6xl items-center justify-start gap-4">
                     <div className="flex-1 flex items-center gap-4">
-                        <a href="/" className="text-2xl font-bold text-rose-500">Bozoro</a>
+                        <a href="/" className="flex items-center text-2xl font-bold text-rose-500">
+                            <img
+                                src="/android-chrome-192x192.png"
+                                alt="Bozoro logo"
+                                className="h-6 w-6"
+                            />
+                            ozoro
+                        </a>
                         <form
                             ref={formRef}
                             onSubmit={(e) => {
