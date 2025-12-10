@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter, type ReadonlyURLSearchParams } from "next/navigation";
-import { useSearchSearchRetrieve } from "@repo/api";
+import { useSearchSearchRetrieveInfinite } from "@repo/api";
 import Link from "next/link";
 
 export default function SearchPage() {
@@ -38,7 +38,14 @@ export default function SearchPage() {
     return Number.isFinite(n) ? n : undefined;
   };
 
-  const { data, isLoading, error } = useSearchSearchRetrieve(
+  const {
+    data,
+    error,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useSearchSearchRetrieveInfinite<any>(
     {
       q: query || undefined,
       category: appliedFilters.categories.length ? appliedFilters.categories : undefined,
@@ -46,11 +53,24 @@ export default function SearchPage() {
       price_min: appliedFilters.minPrice ? parseNumber(appliedFilters.minPrice) : undefined,
       price_max: appliedFilters.maxPrice ? parseNumber(appliedFilters.maxPrice) : undefined,
       page_size: 20,
+      page: 1,
     },
     {
       query: {
         enabled: !!query.trim(),
         refetchOnWindowFocus: false,
+        getNextPageParam: (lastPage: any, pages: any[]) => {
+          const lastCount = lastPage?.results?.length ?? 0;
+          if (lastCount < 20 ||lastCount === 0) return undefined;
+
+          const total = lastPage?.count ?? 0;
+          const loaded = pages.reduce(
+            (sum: number, page: any) => sum + (page?.results?.length ?? 0),
+            0
+          );
+          if (loaded >= total) return undefined;
+          return pages.length + 1;
+        },
       } as any,
     }
   );
@@ -84,6 +104,28 @@ export default function SearchPage() {
 
   const categories: string[] = [];
   const brands: string[] = [];
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const products =
+    (data?.pages as any[] | undefined)?.flatMap((page: any) => page?.results ?? []) ?? [];
+  const totalCount = (data?.pages?.[0] as any)?.count ?? 0;
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // Derive dynamic facets from API response
   const facetCategoryValues =
@@ -230,10 +272,15 @@ export default function SearchPage() {
                 {data && !error && (
                   <>
                     <div className="mb-4 text-slate-600">
-                      Found {data.count} products for "{query}"
+                      Found {totalCount} products for "{query}"
                     </div>
+
+                    {products.length === 0 && (
+                      <div className="py-16 text-center text-slate-500">No products found.</div>
+                    )}
+
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
-                      {data.results?.map((product) => (
+                      {products.map((product: any) => (
                         <Link
                           key={product.slug}
                           href={`/products/${product.slug}`}
@@ -268,6 +315,12 @@ export default function SearchPage() {
                         </Link>
                       ))}
                     </div>
+
+                    <div ref={loadMoreRef} className="h-10 w-full" />
+
+                    {isFetchingNextPage && (
+                      <div className="py-4 text-center text-slate-500">Loading more...</div>
+                    )}
                   </>
                 )}
               </main>
