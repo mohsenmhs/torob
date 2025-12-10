@@ -7,14 +7,20 @@ interface ProductPageProps {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
+  return (
+    <Suspense fallback={<ProductDetailSkeleton />}>
+      <ProductPageContent params={params} />
+    </Suspense>
+  );
+}
+
+async function ProductPageContent({ params }: ProductPageProps) {
   const { id } = await params;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f9fafb" }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
-        <Suspense fallback={<ProductDetailSkeleton />}>
-          <ProductDetail id={id} />
-        </Suspense>
+        <ProductDetail id={id} />
       </div>
     </div>
   );

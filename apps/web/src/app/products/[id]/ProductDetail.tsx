@@ -102,12 +102,12 @@ export async function ProductDetail({ id }: { id: string }) {
                   fontWeight: "600",
                   transition: "background-color 0.2s",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#1d4ed8";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#2563eb";
-                }}
+                // onMouseEnter={(e) => {
+                //   e.currentTarget.style.backgroundColor = "#1d4ed8";
+                // }}
+                // onMouseLeave={(e) => {
+                //   e.currentTarget.style.backgroundColor = "#2563eb";
+                // }}
               >
                 View on {product.merchant || "Merchant"}
               </a>

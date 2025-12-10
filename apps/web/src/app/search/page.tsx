@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams, useRouter, type ReadonlyURLSearchParams } from "next/navigation";
 import { useSearchSearchRetrieve } from "@repo/api";
 import Link from "next/link";
 
@@ -9,15 +9,29 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get("q") || "";
-  const initialCategories = searchParams.getAll("category");
-  const initialBrands = searchParams.getAll("brand");
-  const [filters, setFilters] = useState({
-    categories: initialCategories.length ? initialCategories : [],
-    brands: initialBrands.length ? initialBrands : [],
-    minPrice: searchParams.get("minPrice") || "",
-    maxPrice: searchParams.get("maxPrice") || "",
-    sortBy: searchParams.get("sortBy") || "relevance",
-  });
+
+  const parseFiltersFromParams = (params: ReadonlyURLSearchParams) => {
+    const categories = params.getAll("category");
+    const brands = params.getAll("brand");
+    return {
+      categories: categories.length ? categories : [],
+      brands: brands.length ? brands : [],
+      minPrice: params.get("minPrice") || "",
+      maxPrice: params.get("maxPrice") || "",
+      sortBy: params.get("sortBy") || "relevance",
+    };
+  };
+
+  const [draftFilters, setDraftFilters] = useState(() => parseFiltersFromParams(searchParams));
+  const [appliedFilters, setAppliedFilters] = useState(() => parseFiltersFromParams(searchParams));
+
+  // Keep filters in sync with URL changes (e.g., back/forward navigation).
+  useEffect(() => {
+    const next = parseFiltersFromParams(searchParams);
+    setDraftFilters(next);
+    setAppliedFilters(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   const parseNumber = (value: string) => {
     const n = Number(value);
@@ -27,10 +41,10 @@ export default function SearchPage() {
   const { data, isLoading, error } = useSearchSearchRetrieve(
     {
       q: query || undefined,
-      category: filters.categories.length ? filters.categories : undefined,
-      brand: filters.brands.length ? filters.brands : undefined,
-      price_min: parseNumber(filters.minPrice),
-      price_max: parseNumber(filters.maxPrice),
+      category: appliedFilters.categories.length ? appliedFilters.categories : undefined,
+      brand: appliedFilters.brands.length ? appliedFilters.brands : undefined,
+      price_min: appliedFilters.minPrice ? parseNumber(appliedFilters.minPrice) : undefined,
+      price_max: appliedFilters.maxPrice ? parseNumber(appliedFilters.maxPrice) : undefined,
       page_size: 20,
     },
     {
@@ -45,30 +59,31 @@ export default function SearchPage() {
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
   const handleCategoryToggle = (value: string) => {
-    setFilters((prev) => ({ ...prev, categories: toggleValue(prev.categories, value) }));
+    setDraftFilters((prev) => ({ ...prev, categories: toggleValue(prev.categories, value) }));
   };
 
   const handleBrandToggle = (value: string) => {
-    setFilters((prev) => ({ ...prev, brands: toggleValue(prev.brands, value) }));
+    setDraftFilters((prev) => ({ ...prev, brands: toggleValue(prev.brands, value) }));
   };
 
   const handleFieldChange = (key: "minPrice" | "maxPrice" | "sortBy", value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setDraftFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const applyFilters = () => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
-    filters.categories.forEach((c) => params.append("category", c));
-    filters.brands.forEach((b) => params.append("brand", b));
-    if (filters.minPrice) params.set("minPrice", filters.minPrice);
-    if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
-    if (filters.sortBy) params.set("sortBy", filters.sortBy);
+    draftFilters.categories.forEach((c) => params.append("category", c));
+    draftFilters.brands.forEach((b) => params.append("brand", b));
+    if (draftFilters.minPrice) params.set("minPrice", draftFilters.minPrice);
+    if (draftFilters.maxPrice) params.set("maxPrice", draftFilters.maxPrice);
+    if (draftFilters.sortBy) params.set("sortBy", draftFilters.sortBy);
+    setAppliedFilters(draftFilters);
     router.push(`/search?${params.toString()}`);
   };
 
-  const categories = [];
-  const brands = [];
+  const categories: string[] = [];
+  const brands: string[] = [];
 
   // Derive dynamic facets from API response
   const facetCategoryValues =
@@ -98,7 +113,7 @@ export default function SearchPage() {
                   <div className="mb-6">
                     <label className="mb-2 block text-sm font-semibold text-slate-700">Sort By</label>
                     <select
-                      value={filters.sortBy}
+                      value={draftFilters.sortBy}
                       onChange={(e) => handleFieldChange("sortBy", e.target.value)}
                       className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                     >
@@ -116,7 +131,7 @@ export default function SearchPage() {
                       {(facetCategoryValues || categories).map((cat: any) => {
                         const label = typeof cat === "string" ? cat : cat.value;
                         const count = typeof cat === "string" ? undefined : cat.count;
-                        const checked = filters.categories.includes(label);
+                        const checked = draftFilters.categories.includes(label);
                         return (
                           <label key={label} className="flex items-center gap-2">
                             <input
@@ -142,7 +157,7 @@ export default function SearchPage() {
                       {(facetBrandValues || brands).map((brand: any) => {
                         const label = typeof brand === "string" ? brand : brand.value;
                         const count = typeof brand === "string" ? undefined : brand.count;
-                        const checked = filters.brands.includes(label);
+                        const checked = draftFilters.brands.includes(label);
                         return (
                           <label key={label} className="flex items-center gap-2">
                             <input
@@ -173,14 +188,14 @@ export default function SearchPage() {
                       <input
                         type="number"
                         placeholder="Min"
-                        value={filters.minPrice}
+                        value={draftFilters.minPrice}
                         onChange={(e) => handleFieldChange("minPrice", e.target.value)}
                         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                       />
                       <input
                         type="number"
                         placeholder="Max"
-                        value={filters.maxPrice}
+                        value={draftFilters.maxPrice}
                         onChange={(e) => handleFieldChange("maxPrice", e.target.value)}
                         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                       />
@@ -225,6 +240,14 @@ export default function SearchPage() {
                           className="text-inherit no-underline"
                         >
                           <div className="h-full rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md">
+                            <div className="mb-3 h-44 overflow-hidden rounded-md bg-slate-50">
+                              <img
+                                src={product.main_image ? String(product.main_image) : "/android-chrome-192x192.png"}
+                                alt={product.title}
+                                className={`h-full w-full object-contain ${product.main_image ? "" : "filter grayscale brightness-95"}`}
+                                loading="lazy"
+                              />
+                            </div>
                             <div className="mb-2 line-clamp-2 text-base font-semibold text-slate-900">
                               {product.title}
                             </div>

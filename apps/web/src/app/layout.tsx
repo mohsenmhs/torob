@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
 import { TopNav } from "../components/TopNav";
@@ -35,7 +36,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased min-h-screen flex flex-col bg-slate-100`}>
         <Providers>
-          <TopNav />
+          <Suspense fallback={null}>
+            <TopNav />
+          </Suspense>
           <div className="flex-1 flex flex-col">
             {children}
           </div>
