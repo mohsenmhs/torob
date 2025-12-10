@@ -280,40 +280,45 @@ export default function SearchPage() {
                     )}
 
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
-                      {products.map((product: any) => (
-                        <Link
-                          key={product.slug}
-                          href={`/products/${product.slug}`}
-                          className="text-inherit no-underline"
-                        >
-                          <div className="h-full rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md">
-                            <div className="mb-3 h-44 overflow-hidden rounded-md bg-slate-50">
-                              <img
-                                src={product.main_image ? String(product.main_image) : "/android-chrome-192x192.png"}
-                                alt={product.title}
-                                className={`h-full w-full object-contain ${product.main_image ? "" : "filter grayscale brightness-95"}`}
-                                loading="lazy"
-                              />
-                            </div>
-                            <div className="mb-2 line-clamp-2 text-base font-semibold text-slate-900">
-                              {product.title}
-                            </div>
-                            {product.description && (
-                              <div className="mb-3 line-clamp-2 text-sm text-slate-600">
-                                {product.description}
+                      {products.map((product: any) => {
+                        const productId = product.id ?? product.slug;
+                        const productSlug = product.slug ?? product.id;
+                        const href = `/products/${productId}/${productSlug}`;
+                        return (
+                          <Link
+                            key={`${productId}-${productSlug}`}
+                            href={href}
+                            className="text-inherit no-underline"
+                          >
+                            <div className="h-full rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md">
+                              <div className="mb-3 h-44 overflow-hidden rounded-md bg-slate-50">
+                                <img
+                                  src={product.main_image ? String(product.main_image) : "/android-chrome-192x192.png"}
+                                  alt={product.title}
+                                  className={`h-full w-full object-contain ${product.main_image ? "" : "filter grayscale brightness-95"}`}
+                                  loading="lazy"
+                                />
                               </div>
-                            )}
-                            <div className="text-lg font-bold text-blue-600">
-                              {product.min_price ? `$${product.min_price.toLocaleString()}` : "N/A"}
-                            </div>
-                            {product.rating !== undefined && (
-                              <div className="mt-1 text-sm text-amber-500">
-                                ★ {product.rating.toFixed(1)}
+                              <div className="mb-2 line-clamp-2 text-base font-semibold text-slate-900">
+                                {product.title}
                               </div>
-                            )}
-                          </div>
-                        </Link>
-                      ))}
+                              {product.description && (
+                                <div className="mb-3 line-clamp-2 text-sm text-slate-600">
+                                  {product.description}
+                                </div>
+                              )}
+                              <div className="text-lg font-bold text-blue-600">
+                                {product.min_price ? `$${product.min_price.toLocaleString()}` : "N/A"}
+                              </div>
+                              {product.rating !== undefined && (
+                                <div className="mt-1 text-sm text-amber-500">
+                                  ★ {product.rating.toFixed(1)}
+                                </div>
+                              )}
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
 
                     <div ref={loadMoreRef} className="h-10 w-full" />

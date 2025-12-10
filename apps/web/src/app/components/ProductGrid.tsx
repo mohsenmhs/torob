@@ -8,6 +8,7 @@ export async function ProductGrid() {
   // For now, we'll use mock data to demonstrate the structure
   const mockProducts = Array.from({ length: 12 }, (_, i) => ({
     id: `product-${i + 1}`,
+    slug: `product-${i + 1}`,
     name: `Product ${i + 1}`,
     description: `This is a great product ${i + 1} with amazing features`,
     price: Math.floor(Math.random() * 1000) + 10,
@@ -23,7 +24,7 @@ export async function ProductGrid() {
       {mockProducts.map((product) => (
         <Link
           key={product.id}
-          href={`/products/${product.id}`}
+          href={`/products/${product.id}/${product.slug}`}
           className="block"
         >
           <ProductCard product={product} />

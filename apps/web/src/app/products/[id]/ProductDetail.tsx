@@ -1,22 +1,43 @@
-import type { Product } from "@repo/typesense";
+type ProductDetailData = {
+  id: string;
+  name: string;
+  description?: string;
+  price?: number;
+  originalPrice?: number;
+  image?: string | null;
+  rating?: number;
+  category?: string;
+  brand?: string;
+  merchant?: string;
+  url?: string;
+};
 
-async function getProduct(id: string): Promise<Product> {
-  // In a real app, this would fetch from Typesense or your API
-  // This is mock data for demonstration
-  await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
+async function getProduct(id: string): Promise<ProductDetailData> {
+  const endpoint = `https://torob.kolahghermezi.link/api/catalogue/product/${id}`;
+
+  const res = await fetch(endpoint, {
+    // Revalidate periodically to keep data reasonably fresh without blocking
+    next: { revalidate: 300 },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch product ${id}`);
+  }
+
+  const data = await res.json();
 
   return {
-    id,
-    name: `Product ${id}`,
-    description: `This is a detailed description of product ${id}. It has amazing features and great value for money.`,
-    price: Math.floor(Math.random() * 1000) + 10,
-    originalPrice: Math.floor(Math.random() * 1200) + 100,
-    image: `https://picsum.photos/800/600?random=${id}`,
-    rating: Math.random() * 2 + 3,
-    category: "Electronics",
-    brand: "Brand",
-    merchant: "Merchant Name",
-    url: "https://example.com",
+    id: String(data.id ?? id),
+    name: data.name ?? data.title ?? `Product ${id}`,
+    description: data.description ?? data.desc ?? undefined,
+    price: data.price ?? data.min_price ?? data.price_min ?? undefined,
+    originalPrice: data.originalPrice ?? data.max_price ?? data.price_max ?? undefined,
+    image: data.image ?? data.main_image ?? data.image_url ?? null,
+    rating: typeof data.rating === "number" ? data.rating : undefined,
+    category: data.category ?? data.category_name ?? undefined,
+    brand: data.brand ?? data.brand_name ?? undefined,
+    merchant: data.merchant ?? data.seller ?? data.vendor ?? undefined,
+    url: data.url ?? data.product_url ?? data.link ?? undefined,
   };
 }
 

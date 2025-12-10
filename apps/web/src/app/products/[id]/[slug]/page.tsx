@@ -1,12 +1,12 @@
 import { Suspense } from "react";
-import { ProductDetail } from "./ProductDetail";
-import { ProductDetailSkeleton } from "./ProductDetailSkeleton";
+import { ProductDetail } from "../ProductDetail";
+import { ProductDetailSkeleton } from "../ProductDetailSkeleton";
 
 interface ProductPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; slug: string }>;
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default function ProductPage({ params }: ProductPageProps) {
   return (
     <Suspense fallback={<ProductDetailSkeleton />}>
       <ProductPageContent params={params} />
@@ -32,11 +32,9 @@ export async function generateMetadata({
   title: string;
   description: string;
 }> {
-  const { id } = await params;
-  // In a real app, fetch product data here
+  const { id, slug } = await params;
   return {
-    title: `Product ${id} - Torob`,
+    title: `Product ${slug}`,
     description: `View details for product ${id}`,
   };
 }
-
