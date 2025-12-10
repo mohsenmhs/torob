@@ -105,7 +105,7 @@ export default function SearchPage() {
           {query && (
             <div className="flex gap-8">
               {/* Filters Sidebar */}
-              <aside className="w-64 flex-shrink-0">
+              <aside className="w-64 flex-shrink-0 self-start sticky top-6">
                 <div className="rounded-lg bg-white p-6 shadow-sm">
                   <h2 className="mb-6 text-xl font-bold text-slate-900">Filters</h2>
 
